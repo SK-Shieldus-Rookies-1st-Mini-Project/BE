@@ -9,7 +9,7 @@ from sklearn.utils.class_weight import compute_class_weight
 import numpy as np, joblib, os
 
 # 1) 데이터 로드
-df = pd.read_csv("data/한국인터넷진흥원_피싱사이트_20241231_수정본.csv")
+df = pd.read_csv("data/한국인터넷진흥원_피싱사이트_20241231_수정본_with_top1m.csv")
 X, y = df["url"].astype(str), df["label"].astype(int)
 
 # 2) (아주 단순하게) 홀드아웃 분할
