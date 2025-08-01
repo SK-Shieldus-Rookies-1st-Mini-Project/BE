@@ -1,29 +1,23 @@
-import csv
+url 붙이기
+import pandas as pd
 
-# 파일 경로
-top1m_path = r'c:\SK-Shieldus-Rookies-dev\TeamProject\Zikiring\BE\data\top-1m.csv'
-kisa_path = r'c:\SK-Shieldus-Rookies-dev\TeamProject\Zikiring\BE\data\한국인터넷진흥원_피싱사이트_20241231_수정본.csv'
-output_path = r'c:\SK-Shieldus-Rookies-dev\TeamProject\Zikiring\BE\data\한국인터넷진흥원_피싱사이트_20241231_수정본_with_top1m.csv'
+# 파일 경로 (필요에 따라 수정)
+TOP1M_PATH = "data/top-1m.csv"
+BENIGN_PATH = "benign_html.csv"
+OUTPUT_PATH = "benign_html.csv"  # 덮어쓰려면 같은 이름으로 바꿔도 됨
 
-# 1. top-1m.csv에서 url만 추출
-urls = []
-with open(top1m_path, 'r', encoding='utf-8') as f:
-    reader = csv.reader(f)
-    for row in reader:
-        if len(row) > 1:
-            urls.append(row[1])
+# top-1m.csv는 헤더가 없고 "rank,url" 구조라 가정
+top1m = pd.read_csv(TOP1M_PATH, header=None, names=["rank", "url"], dtype=str)
 
-# 2. 기존 KISA 파일 읽기
-with open(kisa_path, 'r', encoding='utf-8') as f:
-    kisa_rows = list(csv.reader(f))
+# benign_html.csv는 헤더가 있는 CSV
+benign = pd.read_csv(BENIGN_PATH, dtype=str)
 
-# 3. top-1m url을 첫번째 칼럼, 두번째 칼럼은 0으로 추가
-for url in urls:
-    kisa_rows.append([url, '0'])
+# 필요한 길이 맞추기: benign 행 수만큼 top1m의 url을 가져오되, 부족하면 NaN 채움
+url_series = top1m["url"].reindex(range(len(benign))).reset_index(drop=True)
 
-# 4. 결과 저장
-with open(output_path, 'w', newline='', encoding='utf-8') as f:
-    writer = csv.writer(f)
-    writer.writerows(kisa_rows)
+# 새 DataFrame: url을 맨 앞에 붙이고 기존 benign 컬럼들을 뒤로 이동
+result = pd.concat([url_series.rename("url"), benign.reset_index(drop=True)], axis=1).head(1000)
 
-print('완료: 새로운 파일이 저장되었습니다.')
+# 결과 저장
+result.to_csv(OUTPUT_PATH, index=False)
+print(f"저장 완료: {OUTPUT_PATH} (행: {len(result)})")
